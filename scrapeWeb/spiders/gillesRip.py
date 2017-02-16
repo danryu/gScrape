@@ -13,6 +13,7 @@ class GillesripSpider(scrapy.Spider):
     name = "gillesRip"
     allowed_domains = ["www.bbc.co.uk"]
     # eg start_urls = ['http://www.bbc.co.uk/programmes/b01fm4ss/broadcasts/2016/01']
+    start_urls = ['http://www.bbc.co.uk/programmes/b01fm4ss/broadcasts/2016/01']
     # for May 2002 - Oct 2009 - DIFFERENT CRAWLER
     # http://www.bbc.co.uk/radio1/gillespeterson/tracklistings200[2-9].shtml
     
@@ -22,11 +23,11 @@ class GillesripSpider(scrapy.Spider):
     # for April 2012 - current
     #start_urls = ['http://www.bbc.co.uk/programmes/b01fm4ss/broadcasts/']
 
-    def start_requests(self):
-        for year in range(2012,2018):
-            for month in ['01','02','03','04','05','06','07','08','09','10','11','12']:
-                url = self.start_urls[0] + str(year) + "/" + month
-                yield scrapy.Request(url, callback=self.parse)
+#    def start_requests(self):
+#        for year in range(2012,2018):
+#            for month in ['01','02','03','04','05','06','07','08','09','10','11','12']:
+#                url = self.start_urls[0] + str(year) + "/" + month
+#                yield scrapy.Request(url, callback=self.parse)
 
     def parse(self, response):
         for show in response.css("div.br-box-page.programmes-page ol li"):
@@ -71,40 +72,79 @@ class GillesripSpider(scrapy.Spider):
         t_list = []
         index = 1
         
-        #FIXME need to pick up submixes
-        # #segments > div.component__body.br-box-page > div > ul > li:nth-child(32)
-        #segments > div.component__body.br-box-page > div > ul > li:nth-child(32)
-        #segments > div.component__body.br-box-page > div > ul > li:nth-child(32) > ul
-        # segments-list__item segments-list__item--group br-keyline  ml__hidden
-        
-        for track in response.css("#segments div.component__body.br-box-page div ul li div div.segment__content.segment--withbuttons div.segment__track "):
-
+        # FIXME - need to switch on "sub-class" of li element
+        for track in response.css("#segments div.component__body.br-box-page div ul li"):
             # EXAMPLES 
             # kode9 ... http://www.bbc.co.uk/programmes/b00q8xs9
             # ed motta .. http://www.bbc.co.uk/programmes/b06whk5b
+            #print ("TRRRRRRRRRRRACK: %s" % track.css("class").extract())
+            # IF SUBMIX
             
-            # if submix title........
-            # segments-list__item segments-list__item--group br-keyline  ml__hidden h3
-            # segments-list__item segments-list__item--group br-keyline  ml__hidden h3
-            #segments > div.component__body.br-box-page > div > ul > li:nth-child(9) > h3
+            submix = track.css("div.segments-list__item.segments-list__item--group.br-keyline.ml__hidden").extract_first()
+            if submix is not None:
+                submix_entry = {
+                    'index': index,
+                    'title': submix.css("h3::text").extract()
+                }
+                print ("SUBMIX: %s" % submix_entry)
+                t_list.append(submix_entry)
+                index = index+1
+                break
+
+                #segments > div.component__body.br-box-page > div > ul > li.segments-list__item.segments-list__item--group.br-keyline.ml__hidden > h3
+                
+#                subindex = 1
+#                sub_t_list = []
+#                for submixtrack in submix.css("ul li"):
+#                    sub_track_entry = {
+#                        'subindex': subindex, 
+#                    #FIXME fix "space ape" tune -  also as in http://www.bbc.co.uk/programmes/b00q8xs9 kode9: (space ape tune) #segments > div.component__body.br-box-page > div > ul > li:nth-child(9) > ul > li:nth-child(3) > div > div.segment__content.segment--withbuttons > div.segment__track > p > span
+#                    #FIXME loop on artist for multiple artist
+#                    #FIXME also check for h4
+#                        'artist': submixtrack.css("h3 span span.artist::text").extract_first(),                
+#                        #FIXME check for "feat: " also in trackname
+#                        'trackname': submixtrack.css("p span::text").extract_first(),
+#                        'label': submixtrack.css("ul li span::text").extract_first()
+#                    }
+#                    sub_t_list.append(sub_track_entry)
+#                    subindex = subindex+1
+#                #submix_entry['subtrax'] = sub_t_list
+#                t_list.append(sub_t_list)
+#                break
             
-            # if speech segment........
-            # segments-list__item segments-list__item--speech ml__hidden
-            #segments > div.component__body.br-box-page > div > ul > li:nth-child(10) > div > div > p.no-margin
+            # IF SPEECHBIT
+            speechbit = track.css("div.segments-list__item.segments-list__item--speech.ml__hidden div div").extract_first()
+            if speechbit is not None:
+                speechbit_entry = {
+                    'index': index,
+                    'blurb': speechbit.css("h4::text").extract(),
+                }
+                t_list.append(speechbit_entry)
+                print ("SPEECHBIT: %s" % speechbit_entry)
+                index = index+1
+                break
             
-            # if track.........
-            track_entry = {
-                #FIXME check for h4 as well for segments ...
-                # FIXME loop on artist for multiple artist
-                'index': index,
-                # or track.css("h4 span span.artist::text").extract_first(),
-                'artist': track.css("h3 span span.artist::text").extract_first(),
-                #FIXME check for "feat: " also in trackname
-                'trackname': track.css("p span::text").extract_first(),
-                'label': track.css("ul li span::text").extract_first()
-            }
-            t_list.append(track_entry)
-            index = index+1
+#            trackthing = track.css("segments-list__item.segments-list__item--music.ml__hidden div div.segment__content.segment--withbuttons div.segment__track").extract()
+            # also caught by:
+            trackthing = track.css("div.segments-list__item.segments-list__item--music div div.segment__content.segment--withbuttons div.segment__track").extract_first()
+            if trackthing is not None:
+                track_entry = {
+                    'index': index,
+                    #FIXME fix "space ape" tune -  also as in http://www.bbc.co.uk/programmes/b00q8xs9 kode9: (space ape tune) #segments > div.component__body.br-box-page > div > ul > li:nth-child(9) > ul > li:nth-child(3) > div > div.segment__content.segment--withbuttons > div.segment__track > p > span
+                    'artist': trackthing.css("h3 span span.artist::text").extract_first(),
+                    #FIXME check for "feat: " also in trackname
+                    'trackname': trackthing.css("p span::text").extract_first(),
+                    'label': trackthing.css("ul li span::text").extract_first()
+                }
+                # Fix for h4
+                if track_entry['artist'] is None:
+                    track_entry['artist'] = trackthing.css("h4 span span.artist::text").extract_first()
+                print ("TRACK: %s" % track_entry)
+                t_list.append(track_entry)
+                index = index+1
+                
+            # end track iteration
         tracklist['showtrax'] = t_list
+        print ("TLIST...%s" % t_list)
         return tracklist
         
