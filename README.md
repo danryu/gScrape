@@ -2,10 +2,13 @@
 
 A quick utility to scrape the BBC iPlayer website for tracklisting information.
 Each show has the following information extracted:
-Date
-Title
-Synopsis
-Tracklist featuring each artist, tracktitle and label (where supplied)
+- Date
+- Title
+- Synopsis
+- Tracklist featuring each:
+  - artist
+  - tracktitle
+  - label (where supplied)
 
 Install requirements by doing ``` pip install -r requirements.txt```
 
