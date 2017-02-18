@@ -9,6 +9,8 @@ Tracklist featuring each artist, tracktitle and label (where supplied)
 
 Install requirements by doing ``` pip install -r requirements.txt```
 
+Usage: 
+
 ``` scrapy crawl ir_scrape -o output_file.json ```
 
 See the comments in the code for how to set the sites to scrape.
