@@ -26,7 +26,9 @@ class pre_IRScrapeSpider(scrapy.Spider):
         for show in response.css("#tracklisting_wrapper div div"):
             p_tracklist = Tracklist()
             p_tracklist['showurl'] = show.css("p.date a::attr(href)").extract_first()
-            p_tracklist['showdate'] = p_tracklist['showurl']
+            m = re.match('.*(20.*)$', p_tracklist['showurl'])
+            if m is not None:
+                p_tracklist['showdate'] = m.group(1)
             p_tracklist['showname'] =  show.css("p.info::text").extract_first()
             show_url = p_tracklist['showurl']
             if show_url is not None:
@@ -37,6 +39,7 @@ class pre_IRScrapeSpider(scrapy.Spider):
 
     def parse_show(self, response): 
         tracklist = response.meta['tracklist']
+        tracklist['showurl'] = response.url
         t_list = []
         index = 1
         for track in response.css("#main-rm div font"):
