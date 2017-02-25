@@ -18,7 +18,7 @@ class IRScrapeSpider(scrapy.Spider):
     #start_urls = ['http://www.bbc.co.uk/programmes/b006wq8d/broadcasts/2010/01']
     
     # late junction test
-    start_urls = ['http://www.bbc.co.uk/programmes/b006tp52/broadcasts/2017/01']
+    #start_urls = ['http://www.bbc.co.uk/programmes/b006tp52/broadcasts/2017/01']
     
     # for May 2002 - Oct 2009 - DIFFERENT CRAWLER
     # http://www.bbc.co.uk/radio1/gillespeterson/tracklistings200[2-9].shtml
@@ -27,13 +27,13 @@ class IRScrapeSpider(scrapy.Spider):
     #start_urls = ['http://www.bbc.co.uk/programmes/b006wq8d/broadcasts/']
     
     # for April 2012 - current
-    #start_urls = ['http://www.bbc.co.uk/programmes/b01fm4ss/broadcasts/']
+    start_urls = ['http://www.bbc.co.uk/programmes/b01fm4ss/broadcasts/']
 
-#    def start_requests(self):
-#        for year in range(2009,2013):
-#            for month in ['01','02','03','04','05','06','07','08','09','10','11','12']:
-#                url = self.start_urls[0] + str(year) + "/" + month
-#                yield scrapy.Request(url, callback=self.parse)
+    def start_requests(self):
+        for year in range(2012,2018):
+            for month in ['01','02','03','04','05','06','07','08','09','10','11','12']:
+                url = self.start_urls[0] + str(year) + "/" + month
+                yield scrapy.Request(url, callback=self.parse)
 
     def parse(self, response):
         for show in response.css("div.br-box-page.programmes-page ol li"):
