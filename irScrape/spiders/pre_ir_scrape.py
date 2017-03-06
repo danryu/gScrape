@@ -64,7 +64,7 @@ class pre_IRScrapeSpider(scrapy.Spider):
                     brline = re.sub('<.*tracklisting_archive_container.*>', '', brline)
                     brline = re.sub('<.*hand\ aligned\ image.*', '', brline)
                     brline = re.sub('<.*font.*?>', '', brline) 
-                    brline = re.sub('<.*strong.*?>', '', brline) 
+                    brline = re.sub('</?strong>', '', brline) 
                     brline = re.sub('<.?b.?>', '', brline)
                     brline = re.sub('</a>', '', brline)
                     brline = re.sub('<.*em.*?>', '', brline)
@@ -76,8 +76,9 @@ class pre_IRScrapeSpider(scrapy.Spider):
                     brline = re.sub('0?[23][\.\:]00', '', brline)
                     
                     if brline != "":
+                        # get rid of 
                         # assume it's a track if we have: asdasdasdasd-'asdadasdasd'....
-                        m = re.match("(.*?)([-–] | [-–])(.*)$", brline)
+                        m = re.match("(.*?)([-–­] | [-–­])(.*)$", brline)
                         if m is not None: # we have a track
                             artist = m.group(1)
                             tracktitle = m.group(3)

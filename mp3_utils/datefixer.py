@@ -53,4 +53,4 @@ for show in totaltrax:
 #            pprint("NEWDATE: " + newdate)
 
 with open("datefixed_file.json", "w") as outfile:
-     json.dump(totaltrax, outfile)
+     json.dump(totaltrax, outfile, indent=2, sort_keys=True)

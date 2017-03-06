@@ -22,4 +22,4 @@ for file in files:
 #        pprint (show['showdate'])
 
 with open("merged_file.json", "w") as outfile:
-     json.dump(totaltrax, outfile)
+     json.dump(totaltrax, outfile, indent=2, sort_keys=True)
