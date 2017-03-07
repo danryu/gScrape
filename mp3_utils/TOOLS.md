@@ -10,3 +10,11 @@
 
 - Pretty print:
 json_pp -f json < datefixed.json  > pp_fullindex.json
+
+- do pre_ir_scrape
+-- do artisttruncer.py
+-- do blurbfixer.py
+-- do blurbconverter.py
+-- do labelfixer.py
+
+- now I think it's almost clean! Just a few dirty blurbs ...
