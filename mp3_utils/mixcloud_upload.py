@@ -14,7 +14,7 @@ mp3files = sys.argv
 mp3files.remove(mp3files[0])
 
 # load the json trax index into totaltrax
-files = {'ultimate_mega_index.json'}
+files = {'ultimate_index_manfixd.json'}
 totaltrax = []
 for file in files:
     print ("Loading JSON: " + file)
@@ -26,6 +26,7 @@ for file in files:
 # here we load *.mp3
 for mp3file in mp3files:
     filename = os.path.basename(mp3file)
+    pprint (">>>>>>>>>>>>>> STARTING PROCESSING OF FILE: %s" % filename)
     d = re.match("^.*(20..)-([0-9]{2})-([0-9]{2}).*mp3$", filename)
     if d is not None:
         year = d.group(1)
@@ -112,6 +113,9 @@ for mp3file in mp3files:
                                           files=files,
                                           )
                         pprint (r.status_code)
+                        if r.status_code == "200":
+                            pprint("SUCCESSFULLY POSTED FILE: %s" % mp3file)
+                            
                     
 
 # got access token by doing GET to 
