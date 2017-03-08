@@ -24,13 +24,13 @@ class IRScrapeSpider(scrapy.Spider):
     # http://www.bbc.co.uk/radio1/gillespeterson/tracklistings200[2-9].shtml
     
     # for Nov 2009 - Mar 2012
-    #start_urls = ['http://www.bbc.co.uk/programmes/b006wq8d/broadcasts/']
+    start_urls = ['http://www.bbc.co.uk/programmes/b006wq8d/broadcasts/']
     
     # for April 2012 - current
-    start_urls = ['http://www.bbc.co.uk/programmes/b01fm4ss/broadcasts/']
+    #start_urls = ['http://www.bbc.co.uk/programmes/b01fm4ss/broadcasts/']
 
     def start_requests(self):
-        for year in range(2012,2018):
+        for year in range(2009,2013):
             for month in ['01','02','03','04','05','06','07','08','09','10','11','12']:
                 url = self.start_urls[0] + str(year) + "/" + month
                 yield scrapy.Request(url, callback=self.parse)
@@ -63,7 +63,7 @@ class IRScrapeSpider(scrapy.Spider):
             if ptext_xtra is not None:
                 desc_list.append(ptext_xtra)
             #desc_list.append(paragraph.css("p span span::text").extract_first())
-        desc_str = ''.join([str(d) for d in desc_list])
+        desc_str = ' '.join([str(d) for d in desc_list])
         p_tracklist['showdesc'] = desc_str
         
     # FIXME - no need to loop here

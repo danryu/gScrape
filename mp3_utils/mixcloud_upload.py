@@ -4,14 +4,17 @@ import sys
 import os
 import re
 from pprint import pprint
-#from mutagen.mp3 import MP3
-#from mutagen.id3 import ID3
+import urllib.request
+import http.client, urllib.parse
+import shutil
+import requests
+#from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 mp3files = sys.argv
 mp3files.remove(mp3files[0])
 
-# load the json trax into totaltrax
-files = {'data.json'}
+# load the json trax index into totaltrax
+files = {'ultimate_mega_index.json'}
 totaltrax = []
 for file in files:
     print ("Loading JSON: " + file)
@@ -28,62 +31,88 @@ for mp3file in mp3files:
         year = d.group(1)
         month = d.group(2)
         day = d.group(3)
-        date = year + "-" + month + "-" + day
-        print (date)
-#    muta = mutagen.File(file)
-##    print(muta.info.length)
-#    meta = MP3(file)
-##    print(meta.info)
-#    id3 = ID3(file)
-#    composer = id3.getall('TCOM')[0]
-#    title = id3.getall('TIT2')[0]
-#    album = id3.getall('TALB')[0]
-#    comment = id3.getall('COMM')
-#    print (composer, title, album)
-    
+        showdate = year + "-" + month + "-" + day
+        print (showdate)
         for show in totaltrax:
             if 'showdate' in show:
-                if show['showdate'] == date:
-                    pprint (show)
-    
-#    date = getDateFromFileName()
-#    getShowData(date)
-#    imgfile = downloadImgToFile()
-#    uploadToMixCloud(file,title,desc,tracklist with markers,img)
-#    if success:
-#        write successlog to json
+                if show['showdate'] == showdate:
+                    pprint (show['showdate'])
+                    #    imgfile = downloadImgToFile()
+                    imgfile = None
+                    if 'showimgurl' in show:
+                        imgurl = show['showimgurl']
+                    else: 
+                        imgurl = 'http://www.soulsessionsradio.com/wp-content/uploads/Gilles-Peterson.jpeg' #lol
+                    print ("GONNA DOWNLOAD: " + imgurl)
+                    with urllib.request.urlopen(imgurl) as response:
+                        pprint (response.status)
+                        imgfile = response.read()
+#                    with open("/Users/dang/gilles_ichef/" + date + ".jpg", 'wb') as out_file:
+#                        pprint (response.status)
+#                        shutil.copyfileobj(response, out_file)
+#                        pprint ("WHAT")
+                    showdesc = None
+                    if 'showdesc' in show:
+                        showdesc  = show['showdesc']
+                    showname = show['showname']
+#                    params = urllib.parse.urlencode({'@number': 12524, '@type': 'issue', '@action': 'show'})
+#                    headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
+#                    url = 'https://api.mixcloud.com/upload/?access_token=Yv6WrXJAxZXW3nMcEJNyU3aNNtax6gm6'
+#                    files = {'file': ({'mp3': '@mp3file'},
+#                                      {'description': showdesc},
+#                                      {'name': showname})}                                      
+#                    m = MultipartEncoder(
+#                        fields={
+#                                'mp3'           : mp3file,
+#                                'description'   : showdesc,
+#                                'name'          : showname,
+#                               }
+#                    )
+#                    r = requests.post('https://api.mixcloud.com/upload/?access_token=Yv6WrXJAxZXW3nMcEJNyU3aNNtax6gm6', data=m, headers={'Content-Type': m.content_type})
+                    payload = {'name' : "Gilles Peterson - Worldwide: " + showname + " - (" + showdate + ")" }
+                    if showdesc is not None:
+                        payload['description'] = showdesc
 
-#mp3
-#REQUIRED. The audio file to be uploaded. The file should not be larger than 524288000 bytes.
-#name
-#REQUIRED (if a track). The track section song title.
-#picture
-#A picture for the upload. The file should not be larger than 10485760 bytes.
-#description
-#A description for the upload. Maximum of 1000 characters.
-#tags-X-tag
-#Where X is a number 0-4, a tag name for the upload. Up to 5 tags can be provided.
-
-#sections-X-artist
-#REQUIRED (if a track). The track section artist name.
-#sections-X-song
-#REQUIRED (if a track). The track section song title.
-#sections-X-chapter
-#The name of a chapter section.
-#sections-X-start_time
-
-#            for track in show['showtrax']:
-#                if 'artist' in track:
-#                    if track['artist'] == 'Terri Walker':
-#                        pprint (show['showdate'])            
-#                        pprint (show['showname'])
-##                        pprint (show['showurl'])
-##                        pprint (show['showdate'])
-##                        pprint (show['showdesc'])
-#                        pprint (track)
-
-# mixcloud upload: for each file, get showdata, download img, then mixcloud UL(file,title,desc,tracklist with markers,img
-
+                    key_trax = [k['artist'] for k in show['showtrax'] if k.get('trackname')]
+                    traxcount = len(key_trax)
+                    show_length = (2*60*60)
+                    avg_trac_len = traxcount / show_length
+                            
+                    for entry in show['showtrax']:
+                        idx = entry['index']
+                        if 'artist' in entry: # it's a track
+                            if 'label' in entry:
+                                artist = entry['artist'] + " (" + entry['label'] + ")"
+                            else:
+                                artist = entry['artist']
+                            payload['sections-%d-artist' % idx] = artist
+                            payload['sections-%d-song' % idx] = trackname
+                            # do VERY ROUGH tracktimes by averaging : showlength / number of tracks
+                            # assume 20 seconds to get going and no trailers or news mid-show
+                            payload['sections-%d-start_time' % idx] = 20+((idx-1)*avg_trac_len)    
+                        elif 'blurb' in entry: # it's a blurb or title
+                            payload['sections-%d-chapter' % idx] = entry['blurb']
+                        elif 'title' in entry:
+                            payload['sections-%d-chapter' % idx] = entry['title']
+                    tags = ['soul', 'gilles peterson', 'worldwide','electronica', 'jazz']                            
+                    for num, tag in enumerate(tags):
+                        payload['tags-%s-tag' % num] = tag
+                    with open(mp3file, 'rb') as file_to_go:
+                        files = {'mp3': file_to_go}
+                        pprint (files)
+                        if imgfile is not None:
+                            files['picture'] = imgfile
+                        upload_url = 'https://api.mixcloud.com/upload/'
+                        pprint("GONNA UPLOAD : %s" % payload)
+                        pprint("GONNA UPLOAD FILE: %s" % mp3file)
+                        pprint("TOOOOO URL  :" + upload_url)
+                        r = requests.post(upload_url,
+                                          data=payload,
+                                          params={'access_token': 'Yv6WrXJAxZXW3nMcEJNyU3aNNtax6gm6'},
+                                          files=files,
+                                          )
+                        pprint (r.status_code)
+                    
 
 # got access token by doing GET to 
 #https://www.mixcloud.com/oauth/access_token?client_id=QbMYUcaj3SEeEXJKKE&redirect_uri=http://localhost:8000&client_secret=MdQUcCfKeAJaD93HLyc3B2BN3AJEcpGF&code=cSh49aL3W7
