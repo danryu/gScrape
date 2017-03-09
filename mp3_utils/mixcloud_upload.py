@@ -76,21 +76,22 @@ for mp3file in mp3files:
 
                     key_trax = [k['artist'] for k in show['showtrax'] if k.get('trackname')]
                     traxcount = len(key_trax)
-                    show_length = (2*60*60)
-                    avg_trac_len = traxcount / show_length
+                    show_length = ((2*60*60)-30)
+                    avg_trac_len =  show_length / traxcount
                             
                     for entry in show['showtrax']:
                         idx = entry['index']
                         if 'artist' in entry: # it's a track
                             if 'label' in entry:
-                                artist = entry['artist'] + " (" + entry['label'] + ")"
+                                if entry['artist'] is not None and entry['label'] is not None:
+                                    artist = entry['artist'] + " (" + entry['label'] + ")"
                             else:
                                 artist = entry['artist']
                             payload['sections-%d-artist' % idx] = artist
-                            payload['sections-%d-song' % idx] = trackname
+                            payload['sections-%d-song' % idx] = entry['trackname']
                             # do VERY ROUGH tracktimes by averaging : showlength / number of tracks
                             # assume 20 seconds to get going and no trailers or news mid-show
-                            payload['sections-%d-start_time' % idx] = 20+((idx-1)*avg_trac_len)    
+                            payload['sections-%d-start_time' % idx] = 30+((idx-1)*avg_trac_len)    
                         elif 'blurb' in entry: # it's a blurb or title
                             payload['sections-%d-chapter' % idx] = entry['blurb']
                         elif 'title' in entry:
@@ -106,7 +107,6 @@ for mp3file in mp3files:
                         upload_url = 'https://api.mixcloud.com/upload/'
                         pprint("GONNA UPLOAD : %s" % payload)
                         pprint("GONNA UPLOAD FILE: %s" % mp3file)
-                        pprint("TOOOOO URL  :" + upload_url)
                         r = requests.post(upload_url,
                                           data=payload,
                                           params={'access_token': 'Yv6WrXJAxZXW3nMcEJNyU3aNNtax6gm6'},
@@ -115,6 +115,10 @@ for mp3file in mp3files:
                         pprint (r.status_code)
                         if r.status_code == "200":
                             pprint("SUCCESSFULLY POSTED FILE: %s" % mp3file)
+                        else:
+                            pprint("OOOPS: SOMETHING WENT WRONG!!")
+                            pprint(r.raise_for_status())
+                            pprint(r.headers)
                             
                     
 
