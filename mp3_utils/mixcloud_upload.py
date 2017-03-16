@@ -64,8 +64,8 @@ for mp3file in mp3files:
                     else:
                         payload['description'] = showname
                     # inject banner    
-                    banner_string = "-- WITH LOVE FOR THE MUSIC -- WITH THANKS TO GILLES AND THE ARTISTS --\\n\
-                    \\nBBC Summary:\\n"
+                    banner_string = "-- WITH LOVE FOR THE MUSIC -- WITH THANKS TO GILLES AND THE ARTISTS --\\\n\
+                    \\\nCHECK THE TRACKLISTINGS FOR FULL SESSION INFO\\\nBBC Summary:\\\n"
                     
                     pprint ("BANNERSTRING: %s" % banner_string)
                     payload['description'] =  banner_string + payload['description']
