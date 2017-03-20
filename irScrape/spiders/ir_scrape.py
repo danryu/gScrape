@@ -18,19 +18,22 @@ class IRScrapeSpider(scrapy.Spider):
     #start_urls = ['http://www.bbc.co.uk/programmes/b006wq8d/broadcasts/2010/01']
     
     # late junction test
-    #start_urls = ['http://www.bbc.co.uk/programmes/b006tp52/broadcasts/2017/01']
+#    start_urls = ['http://www.bbc.co.uk/programmes/b006tp52/broadcasts/2017/01']
+    # late junction - 2007 to current
+    start_urls = ['http://www.bbc.co.uk/programmes/b006tp52/broadcasts/']
     
-    # for May 2002 - Oct 2009 - DIFFERENT CRAWLER
+    # GP: for May 2002 - Oct 2009 - DIFFERENT CRAWLER
     # http://www.bbc.co.uk/radio1/gillespeterson/tracklistings200[2-9].shtml
     
-    # for Nov 2009 - Mar 2012
-    start_urls = ['http://www.bbc.co.uk/programmes/b006wq8d/broadcasts/']
+    # GP:  for Nov 2009 - Mar 2012
+    #start_urls = ['http://www.bbc.co.uk/programmes/b006wq8d/broadcasts/']
     
-    # for April 2012 - current
+    # GP:  for April 2012 - current
     #start_urls = ['http://www.bbc.co.uk/programmes/b01fm4ss/broadcasts/']
 
+#     uncomment if doing multi-year loops
     def start_requests(self):
-        for year in range(2009,2013):
+        for year in range(2007,2018):
             for month in ['01','02','03','04','05','06','07','08','09','10','11','12']:
                 url = self.start_urls[0] + str(year) + "/" + month
                 yield scrapy.Request(url, callback=self.parse)
@@ -100,6 +103,10 @@ class IRScrapeSpider(scrapy.Spider):
                 # fix for Late Junction extended track info
                 for infobit in track.css("ul li em"):
                     track_entry['extrainfo'] = infobit.css("em::text").extract_first()
+                # fix for Late Junction track start times
+                #segments > div.component__body.br-box-page > div > ul > li:nth-child(1) > div > div.segment__content.segment--withbuttons > div.segment__track > div
+                for timebit in track.css("div.segment__track div"):
+                    track_entry['starttime'] = timebit.css("div::text").extract_first()
                 # Fix for h4
                 if track_entry['artist'] is None:
                     track_entry['artist'] = track.css("h4 span span.artist::text").extract_first()

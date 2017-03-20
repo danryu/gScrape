@@ -3,7 +3,7 @@
 - pre_ir_scrape is for the pre-iPlayer online archive eg Worldwide 2002-09
 
 - use merger script to merge the multiple files
-
+ - fix the merge point in 2009 between old and new records ... there are some spurious entries in 2009 from modern site...
 - use datefixer to standardise the dates to YYYY-MM-DD
 
 - Now you have datefixed json! a complete index

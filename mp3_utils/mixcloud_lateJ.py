@@ -9,6 +9,10 @@ import urllib.request
 import http.client, urllib.parse
 import shutil
 import requests
+import fileinput
+import pymediainfo
+
+from pymediainfo import MediaInfo
 #from requests_toolbelt.multipart.encoder import MultipartEncoder
 from requests.packages.urllib3.util.retry import Retry
 from requests.adapters import HTTPAdapter
@@ -18,7 +22,7 @@ mp3files = sys.argv
 mp3files.remove(mp3files[0])
 
 # load the json trax index into totaltrax
-files = {'ultimate_index_manfixd.json'}
+files = {'lateJunction_semiDateFixed.json'}
 totaltrax = []
 for file in files:
     print ("Loading JSON: " + file)
@@ -29,13 +33,27 @@ for file in files:
 
 # here we load *.mp3
 for mp3file in mp3files:
+    media_info = MediaInfo.parse(mp3file)
+    for track in media_info.tracks:
+        if track.track_type == 'Audio':
+            show_length = track.duration/1000
+            print ("SHOWLENGTH: %s" % show_length)
     filename = os.path.basename(mp3file)
     pprint (">>>>>>>>>>>>>> STARTING PROCESSING OF FILE: %s" % filename)
-    d = re.match("^.*(20..)-([0-9]{2})-([0-9]{2}).*mp3$", filename)
+    d = re.match("^([0-9]+)_([0-9]+)_([0-9]{2}) - (.*).mp3$", filename)
     if d is not None:
-        year = d.group(1)
+        day = d.group(1)
+        if len(day) == 1:
+            day = "0" + day
         month = d.group(2)
-        day = d.group(3)
+        if len(month) == 1:
+            month = "0" + month
+        year = "20" + d.group(3)
+        # take desired showname element from actual filename
+        fileshowname = d.group(4)
+        # take desired showdate format from file too
+        formatdate = d.group(1) + "/" + d.group(2) + "/" + d.group(3)
+        print (fileshowname)
         showdate = year + "-" + month + "-" + day
         print (showdate)
         for show in totaltrax:
@@ -46,8 +64,8 @@ for mp3file in mp3files:
                     imgfile = None
                     if 'showimgurl' in show:
                         imgurl = show['showimgurl']
-                    else: 
-                        imgurl = 'http://www.soulsessionsradio.com/wp-content/uploads/Gilles-Peterson.jpeg' #lol
+#                    else: 
+#                        imgurl = 'http://www.soulsessionsradio.com/wp-content/uploads/Gilles-Peterson.jpeg' #lol
                     print ("GONNA DOWNLOAD IMG: " + imgurl)
                     with urllib.request.urlopen(imgurl) as response:
                         pprint ("IMG DL RESPONSE: %s " % response.status)
@@ -58,24 +76,25 @@ for mp3file in mp3files:
                     showname = show['showname']
 
                     # WRITE PAYLOAD SECTIONS
-                    payload = {'name' : "Gilles Peterson - Worldwide: " + showname + " - (" + showdate + ")" }
-                    if len(payload['name']) > 100:
-                        payload['name'] = "GP WW: " + showname + " - (" + showdate + ")" 
+#                    payload = {'name' : "Gilles Peterson - Worldwide: " + showname + " - (" + showdate + ")" }
+                    payload = {'name' : fileshowname + " - BBC Radio 3’s Late Junction - " + formatdate }
                     if showdesc is not None:
+                        showdesc = showdesc[:1000] # limit showdesc to 1000 characters for mixcloud
                         payload['description'] = showdesc
                     else:
                         payload['description'] = showname
-                    # inject banner    
-                    banner_string = "-- WITH LOVE FOR THE MUSIC -- WITH THANKS TO GILLES AND THE ARTISTS --\\\n\
-                    \\\nCHECK THE TRACKLISTINGS FOR FULL SESSION INFO\\\nBBC Summary:\\\n"
-                    
-                    pprint ("BANNERSTRING: %s" % banner_string)
-                    payload['description'] =  banner_string + payload['description']
+#                    # inject banner    
+#                    banner_string = "-- WITH LOVE FOR THE MUSIC -- WITH THANKS TO GILLES AND THE ARTISTS --\\\n\
+#                    \\\nCHECK THE TRACKLISTINGS FOR FULL SESSION INFO\\\nBBC Summary:\\\n"
+#                    
+#                    pprint ("BANNERSTRING: %s" % banner_string)
+#                    payload['description'] =  banner_string + payload['description']
 
                     # WRITE TRACKLISTINGS to payload
                     key_trax = [k['artist'] for k in show['showtrax'] if k.get('trackname')]
                     traxcount = len(key_trax)
-                    show_length = ((2*60*60)-30)
+
+#                    show_length = ((2*60*60)-30)
                     pprint ("DEBUG: SHOW_LENGTH: %s" % show_length)
                     avg_trac_len =  int(round(show_length / traxcount))  # make this a round number
                     pprint ("DEBUG: AVG_TRAC_LEN: %s" % avg_trac_len)
@@ -87,12 +106,14 @@ for mp3file in mp3files:
                             trac_count = trac_count + 1
                             
                             # set artist 
+                            artist = None
                             if 'label' in entry:
-                                if entry['artist'] is not None and entry['label'] is not None:
+                                if entry['artist'] is not None and entry['label'] is not None: # add label to artist name
                                     artist = entry['artist'] + " (" + entry['label'] + ")"
+                                elif entry['label'] is None: # in case label is entry but it's null
+                                    artist = entry['artist']
                             else:
                                 artist = entry['artist']
-
                             payload['sections-%d-artist' % idx] = artist
                             
                             # SET trackname tag
@@ -110,6 +131,9 @@ for mp3file in mp3files:
                             payload['sections-%d-chapter' % idx] = entry['blurb']
                         elif 'title' in entry: #  or title
                             payload['sections-%d-chapter' % idx] = entry['title']
+                    
+                    for item in payload.items():
+                        print (item)
                     
                     # fix for DMCA restriction in USA: http://support.mixcloud.com/customer/portal/articles/1590263-us-licensing-rules-for-uploaders
                     # for every artist with over 3 occurrences in tracklist
@@ -134,10 +158,33 @@ for mp3file in mp3files:
                                         pprint ("DEBUG: ARTIST NOW: %s" % newartist)
                                         payload[k] = newartist
                     
-                    # do this static set of tags
-                    tags = ['soul', 'gilles peterson', 'worldwide','electronica', 'jazz']                            
-                    for num, tag in enumerate(tags):
-                        payload['tags-%s-tag' % num] = tag
+                    # read tags from file
+                    miniindex = []
+                    with fileinput.input(files=('lateJunc_tag_index.txt')) as f:
+                        count = 1
+                        for line in f:
+                    #        print ("LINE IS %s" % line)
+                            m = re.match("^(.+ Mixtape.*) - (.*)$", line)
+                            if m is not None:
+                                mixtape = {
+                                            'mixname' : m.group(1),
+                                            'mixdate' : m.group(2),
+                    #                        'index' : count
+                                          }
+                                miniindex.append({'index' : count, 'mixtape' : mixtape})
+                    #            print ("NEW MIXTAPE: %s" % mixtape)
+                            n = re.match("Genre hashtags: (.*)", line)
+                            if n is not None:
+                                taglist = n.group(1).split(',')
+                                miniindex[count-1]['mixtape']['mixtags'] = taglist
+                    #            print ("ADDED TAGS %s " % taglist)
+                                count = count + 1
+                        for entry in miniindex:
+                            if entry['mixtape']['mixdate'] == formatdate :            
+                                for num, tag in enumerate(entry['mixtape']['mixtags']):
+#                                    print (str(num) + ":" + tag)
+                                    payload['tags-%s-tag' % num] = tag
+                    
 
                     # PREPARE file to upload
                     with open(mp3file, 'rb') as file_to_go:
