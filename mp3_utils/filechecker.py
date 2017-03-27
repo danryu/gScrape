@@ -22,15 +22,11 @@ r = requests.get("https://api.mixcloud.com/danryu/cloudcasts/?limit=100")
 for mix in r.json()['data']:
     m = re.match(".*worldwide.*(20..-..-..).*/$", mix['key'])
     if m is not None:
-        print (mix['key'])
         date = m.group(1)
-        print (date)
         archive.append(date)
     p = re.match(".*ww.*(20..-..-..).*/$", mix['key'])
     if p is not None:
-        print (mix['key'])
         date = p.group(1)
-        print (date)
         archive.append(date)
 #        print (date)
 #        print (mix['key'])
@@ -42,18 +38,20 @@ while 'next' in r.json()['paging']:
     for mix in r.json()['data']:
         m = re.match(".*worldwide.*(20..-..-..).*/$", mix['key'])
         if m is not None:
-            print (mix['key'])
             date = m.group(1)
             archive.append(date)
         p = re.match(".*ww.*(20..-..-..).*/$", mix['key'])
         if p is not None:
-            print (mix['key'])
             date = p.group(1)
-            print (date)
             archive.append(date)
 
 print(archive)
 print (len(archive))
 
-if '2011-04-27' in archive:
-    print ("YEEEEAEADDDH")
+for thing in archive:
+    if thing == '2011-04-27':
+        print ("Jamie xx")
+    if thing == '2011-05-18':
+        print ("Obenewa")
+    if thing == '2015-06-06':
+        print ("Other Jamie XX")
