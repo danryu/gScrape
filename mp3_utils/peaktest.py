@@ -5,6 +5,7 @@
 #import json
 import sys
 #import os
+import os
 #import re
 #import time
 #from pprint import pprint
@@ -27,3 +28,9 @@ mp3file.remove(mp3files[0])
 filestats = []
 with open(mp3file) as mfile:
     filestats = sox.file_info.stat(mfile)
+mp3file.remove(mp3file[0])
+
+filestats = []
+with open(mp3file[0]) as mfile:
+    print (mfile.name)
+    filestats = sox.core.soxi(mfile.name, "mxoutput.dat")
